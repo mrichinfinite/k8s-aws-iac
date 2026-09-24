@@ -168,6 +168,18 @@ The playbook is designed to be safely rerunnable. Existing cluster bootstrap ope
 
 The disposable curl test pod is intentionally recreated during deployment and therefore reports a legitimate Ansible `changed` result on subsequent runs.
 
+> **Note:** Initial Calico installation can take a few minutes while the
+> Tigera operator creates and initializes the Calico components. During this
+> process, Ansible may display messages such as:
+>
+> ```text
+> FAILED - RETRYING: [control-plane]: calico : Wait for Calico installation to report a version
+> ```
+>
+> These retry messages are expected during initial cluster convergence and do
+> not indicate a deployment failure by themselves. Ansible will continue
+> polling until Calico becomes ready or the configured retry limit is reached.
+
 ## Validate
 
 Run the automated validation suite:

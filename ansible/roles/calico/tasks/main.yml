@@ -11,17 +11,33 @@
     dest: /tmp/calico-custom-resources.yaml
     mode: "0644"
 
+- name: Check whether Tigera operator namespace exists
+  ansible.builtin.command:
+    cmd: >-
+      kubectl --kubeconfig=/etc/kubernetes/admin.conf
+      get namespace tigera-operator
+  register: tigera_operator_namespace
+  changed_when: false
+  failed_when: false
+
 - name: Check Tigera operator manifest for changes
   ansible.builtin.command:
-    cmd: kubectl --kubeconfig=/etc/kubernetes/admin.conf diff -f /tmp/tigera-operator.yaml
+    cmd: >-
+      kubectl --kubeconfig=/etc/kubernetes/admin.conf
+      diff -f /tmp/tigera-operator.yaml
   register: calico_operator_diff
   changed_when: false
   failed_when: calico_operator_diff.rc not in [0, 1]
+  when: tigera_operator_namespace.rc == 0
 
 - name: Install Tigera operator
   ansible.builtin.command:
-    cmd: kubectl --kubeconfig=/etc/kubernetes/admin.conf apply -f /tmp/tigera-operator.yaml
-  when: calico_operator_diff.rc == 1
+    cmd: >-
+      kubectl --kubeconfig=/etc/kubernetes/admin.conf
+      apply -f /tmp/tigera-operator.yaml
+  when: >-
+    tigera_operator_namespace.rc != 0 or
+    calico_operator_diff.rc | default(0) == 1
   changed_when: true
 
 - name: Wait for Tigera Installation CRD
