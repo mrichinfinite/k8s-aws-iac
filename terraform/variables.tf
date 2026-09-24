@@ -11,13 +11,25 @@ variable "project_name" {
 }
 
 variable "vpc_cidr" {
-  type    = string
-  default = "10.50.0.0/16"
+  description = "IPv4 CIDR block for the lab VPC."
+  type        = string
+  default     = "10.50.0.0/16"
+
+  validation {
+    condition     = can(cidrnetmask(var.vpc_cidr))
+    error_message = "vpc_cidr must be a valid IPv4 CIDR block."
+  }
 }
 
 variable "public_subnet_cidr" {
-  type    = string
-  default = "10.50.1.0/24"
+  description = "IPv4 CIDR block for the public subnet."
+  type        = string
+  default     = "10.50.1.0/24"
+
+  validation {
+    condition     = can(cidrnetmask(var.public_subnet_cidr))
+    error_message = "public_subnet_cidr must be a valid IPv4 CIDR block."
+  }
 }
 
 variable "availability_zone" {
@@ -39,12 +51,22 @@ variable "ssh_private_key_path" {
 variable "admin_cidr" {
   description = "CIDR allowed to SSH to the nodes, e.g. 203.0.113.10/32."
   type        = string
+
+  validation {
+    condition     = can(cidrnetmask(var.admin_cidr))
+    error_message = "admin_cidr must be a valid IPv4 CIDR block."
+  }
 }
 
 variable "nodeport_cidr" {
   description = "CIDR allowed to access Kubernetes NodePorts. Use your own IP/32 for a lab or VPC CIDR for internal-only access."
   type        = string
   default     = "10.50.0.0/16"
+
+  validation {
+    condition     = can(cidrnetmask(var.nodeport_cidr))
+    error_message = "nodeport_cidr must be a valid IPv4 CIDR block."
+  }
 }
 
 variable "control_plane_instance_type" {
