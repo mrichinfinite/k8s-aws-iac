@@ -289,3 +289,7 @@ Review the Terraform destroy plan before confirming.
 ├── scripts/                # Deployment/helper scripts
 └── .github/workflows/      # Static CI validation
 ```
+
+## License
+
+This project is licensed under the MIT License. See `LICENSE` for details.
