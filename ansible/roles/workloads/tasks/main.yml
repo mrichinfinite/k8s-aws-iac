@@ -16,6 +16,17 @@
     cmd: kubectl --kubeconfig=/etc/kubernetes/admin.conf wait --for=condition=Ready nodes --all --timeout=300s
   changed_when: false
 
+- name: Wait for Calico node agents to become Ready
+  ansible.builtin.command:
+    cmd: >-
+      kubectl --kubeconfig=/etc/kubernetes/admin.conf
+      wait --for=condition=Ready
+      pod
+      -n calico-system
+      -l k8s-app=calico-node
+      --timeout=300s
+  changed_when: false
+
 - name: Apply nginx deployment and service
   ansible.builtin.command:
     cmd: kubectl --kubeconfig=/etc/kubernetes/admin.conf apply -f /tmp/nginx.yaml
