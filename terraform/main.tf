@@ -114,6 +114,15 @@ resource "aws_vpc_security_group_ingress_rule" "kubelet" {
   to_port           = 10250
 }
 
+resource "aws_vpc_security_group_ingress_rule" "calico_typha" {
+  security_group_id = aws_security_group.nodes.id
+  description       = "Calico Typha between Kubernetes nodes"
+  cidr_ipv4         = var.vpc_cidr
+  from_port         = 5473
+  ip_protocol       = "tcp"
+  to_port           = 5473
+}
+
 resource "aws_vpc_security_group_ingress_rule" "vxlan" {
   security_group_id = aws_security_group.nodes.id
   description       = "Calico VXLAN"
