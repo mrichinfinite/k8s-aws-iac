@@ -1,0 +1,39 @@
+---
+- name: Download Calico Tigera operator manifest
+  ansible.builtin.get_url:
+    url: "https://raw.githubusercontent.com/projectcalico/calico/{{ calico_version }}/manifests/tigera-operator.yaml"
+    dest: /tmp/tigera-operator.yaml
+    mode: "0644"
+
+- name: Download Calico custom resources manifest
+  ansible.builtin.get_url:
+    url: "https://raw.githubusercontent.com/projectcalico/calico/{{ calico_version }}/manifests/custom-resources.yaml"
+    dest: /tmp/calico-custom-resources.yaml
+    mode: "0644"
+
+- name: Install Tigera operator
+  ansible.builtin.command:
+    cmd: kubectl --kubeconfig=/etc/kubernetes/admin.conf apply -f /tmp/tigera-operator.yaml
+  register: calico_operator
+  changed_when: "'configured' in calico_operator.stdout or 'created' in calico_operator.stdout"
+
+- name: Render Calico custom resources with VXLAN enabled and BGP disabled
+  ansible.builtin.template:
+    src: custom-resources.yaml.j2
+    dest: /tmp/calico-custom-resources-rendered.yaml
+    mode: "0644"
+
+- name: Install Calico custom resources
+  ansible.builtin.command:
+    cmd: kubectl --kubeconfig=/etc/kubernetes/admin.conf apply -f /tmp/calico-custom-resources-rendered.yaml
+  register: calico_resources
+  changed_when: "'configured' in calico_resources.stdout or 'created' in calico_resources.stdout"
+
+- name: Wait for Calico installation to report a version
+  ansible.builtin.command:
+    cmd: kubectl --kubeconfig=/etc/kubernetes/admin.conf get installation default -o jsonpath='{.status.calicoVersion}'
+  register: calico_version_status
+  retries: 30
+  delay: 10
+  until: calico_version_status.rc == 0 and calico_version_status.stdout != ""
+  changed_when: false

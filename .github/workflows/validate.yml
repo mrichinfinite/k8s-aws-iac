@@ -1,0 +1,33 @@
+name: Validate
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  static-validation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform format check
+        run: terraform -chdir=terraform fmt -check -recursive
+
+      - name: Terraform init
+        run: terraform -chdir=terraform init -backend=false
+
+      - name: Terraform validate
+        run: terraform -chdir=terraform validate
+
+      - name: Install Ansible collections
+        run: ansible-galaxy collection install -r ansible/requirements.yml
+
+      - name: Ansible syntax check
+        run: |
+          ansible-playbook -i ansible/inventory/aws.ini.example ansible/playbooks/site.yml --syntax-check
+          ansible-playbook -i ansible/inventory/aws.ini.example ansible/playbooks/validate.yml --syntax-check

@@ -1,0 +1,12 @@
+---
+- name: Copy nginx manifest
+  ansible.builtin.copy:
+    src: nginx.yaml
+    dest: /tmp/nginx.yaml
+    mode: "0644"
+
+- name: Copy curl manifest
+  ansible.builtin.copy:
+    src: curl.yaml
+    dest: /tmp/curl.yaml
+    mode: "0644"

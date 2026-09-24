@@ -1,0 +1,45 @@
+---
+- name: Get nodes
+  ansible.builtin.command:
+    cmd: kubectl --kubeconfig=/etc/kubernetes/admin.conf get nodes -o wide
+  register: nodes
+  changed_when: false
+
+- name: Show nodes
+  ansible.builtin.debug:
+    var: nodes.stdout_lines
+
+- name: Verify Calico version
+  ansible.builtin.command:
+    cmd: kubectl --kubeconfig=/etc/kubernetes/admin.conf get installation default -o jsonpath='{.status.calicoVersion}'
+  register: calico_version_result
+  changed_when: false
+  failed_when: calico_version_result.stdout != calico_version
+
+- name: Verify Calico BGP is disabled
+  ansible.builtin.command:
+    cmd: kubectl --kubeconfig=/etc/kubernetes/admin.conf get installation default -o jsonpath='{.spec.calicoNetwork.bgp}'
+  register: calico_bgp
+  changed_when: false
+  failed_when: calico_bgp.stdout != "Disabled"
+
+- name: Verify Calico VXLAN is configured
+  ansible.builtin.command:
+    cmd: kubectl --kubeconfig=/etc/kubernetes/admin.conf get installation default -o jsonpath='{.spec.calicoNetwork.ipPools[0].encapsulation}'
+  register: calico_encapsulation
+  changed_when: false
+  failed_when: calico_encapsulation.stdout != "VXLAN"
+
+- name: Test pod-to-service connectivity
+  ansible.builtin.command:
+    cmd: kubectl --kubeconfig=/etc/kubernetes/admin.conf exec curl -- curl -fsS http://nginx.default.svc.cluster.local
+  register: curl_result
+  changed_when: false
+
+- name: Assert nginx response
+  ansible.builtin.assert:
+    that:
+      - curl_result.rc == 0
+      - "'Welcome to nginx!' in curl_result.stdout"
+    fail_msg: "Pod-to-nginx connectivity test failed."
+    success_msg: "Pod-to-nginx connectivity test passed."

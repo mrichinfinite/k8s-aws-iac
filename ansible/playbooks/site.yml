@@ -1,0 +1,32 @@
+---
+- name: Prepare all Kubernetes nodes
+  hosts: kube_cluster
+  become: true
+  roles:
+    - common
+    - containerd
+    - kubernetes_packages
+
+- name: Initialize Kubernetes control plane
+  hosts: control_plane
+  become: true
+  roles:
+    - control_plane
+
+- name: Install Calico CNI
+  hosts: control_plane
+  become: true
+  roles:
+    - calico
+
+- name: Join workers to Kubernetes
+  hosts: workers
+  become: true
+  roles:
+    - worker
+
+- name: Deploy lab workloads
+  hosts: control_plane
+  become: true
+  roles:
+    - workloads

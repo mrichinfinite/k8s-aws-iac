@@ -1,0 +1,6 @@
+---
+- name: Validate Kubernetes lab
+  hosts: control_plane
+  become: true
+  roles:
+    - validation

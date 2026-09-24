@@ -1,0 +1,12 @@
+.venv/
+.terraform/
+*.tfstate
+*.tfstate.*
+terraform.tfvars
+ansible/inventory/aws.ini
+artifacts/
+*.retry
+__pycache__/
+*.pyc
+*.pem
+*.key

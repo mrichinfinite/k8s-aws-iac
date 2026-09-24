@@ -1,0 +1,7 @@
+---
+galaxy_info:
+  author: lab
+  description: Validate Kubernetes and Calico networking
+  license: MIT
+  min_ansible_version: "2.16"
+dependencies: []

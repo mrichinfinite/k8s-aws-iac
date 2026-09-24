@@ -1,0 +1,15 @@
+kubernetes_version: "1.31"
+kubernetes_package_version: ""
+
+calico_version: "v3.32.2"
+calico_pod_cidr: "192.168.0.0/16"
+
+containerd_config_path: "/etc/containerd/config.toml"
+
+kubernetes_apt_keyring: "/etc/apt/keyrings/kubernetes-apt-keyring.gpg"
+kubernetes_apt_repo: "https://pkgs.k8s.io/core:/stable:/v1.31/deb/"
+
+cluster_api_port: 6443
+
+nginx_image: "nginx:latest"
+curl_image: "curlimages/curl:latest"

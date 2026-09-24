@@ -1,0 +1,54 @@
+---
+- name: Create Kubernetes APT keyring directory
+  ansible.builtin.file:
+    path: /etc/apt/keyrings
+    state: directory
+    mode: "0755"
+
+- name: Download Kubernetes signing key
+  ansible.builtin.get_url:
+    url: "{{ kubernetes_apt_repo }}Release.key"
+    dest: /tmp/kubernetes-release.key
+    mode: "0644"
+
+- name: Convert Kubernetes signing key to keyring
+  ansible.builtin.command:
+    cmd: gpg --dearmor --yes -o {{ kubernetes_apt_keyring }} /tmp/kubernetes-release.key
+  args:
+    creates: "{{ kubernetes_apt_keyring }}"
+
+- name: Configure Kubernetes APT repository
+  ansible.builtin.deb822_repository:
+    name: kubernetes
+    types:
+      - deb
+    uris:
+      - "{{ kubernetes_apt_repo }}"
+    suites:
+      - /
+    signed_by: "{{ kubernetes_apt_keyring }}"
+    state: present
+    enabled: true
+
+- name: Install Kubernetes packages
+  ansible.builtin.apt:
+    name:
+      - "kubelet{{ '=' + kubernetes_package_version if kubernetes_package_version else '' }}"
+      - "kubeadm{{ '=' + kubernetes_package_version if kubernetes_package_version else '' }}"
+      - "kubectl{{ '=' + kubernetes_package_version if kubernetes_package_version else '' }}"
+    state: present
+    update_cache: true
+
+- name: Hold kubelet kubeadm kubectl
+  ansible.builtin.dpkg_selections:
+    name: "{{ item }}"
+    selection: hold
+  loop:
+    - kubelet
+    - kubeadm
+    - kubectl
+
+- name: Enable kubelet
+  ansible.builtin.systemd:
+    name: kubelet
+    enabled: true
