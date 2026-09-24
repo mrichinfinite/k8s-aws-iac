@@ -9,6 +9,42 @@
   ansible.builtin.debug:
     var: nodes.stdout_lines
 
+- name: Get Ready Kubernetes node count
+  ansible.builtin.command:
+    cmd: >-
+      kubectl --kubeconfig=/etc/kubernetes/admin.conf
+      get nodes
+      --no-headers
+  register: kubernetes_nodes
+  changed_when: false
+
+- name: Assert expected Kubernetes nodes are Ready
+  ansible.builtin.assert:
+    that:
+      - kubernetes_nodes.stdout_lines | length == 2
+      - kubernetes_nodes.stdout_lines | select('search', ' Ready ') | list | length == 2
+    fail_msg: "Expected exactly 2 Kubernetes nodes and both to be Ready."
+    success_msg: "Both expected Kubernetes nodes are Ready."
+
+- name: Get Calico node agent readiness
+  ansible.builtin.command:
+    cmd: >-
+      kubectl --kubeconfig=/etc/kubernetes/admin.conf
+      get pods
+      -n calico-system
+      -l k8s-app=calico-node
+      -o jsonpath='{range .items[*]}{.status.containerStatuses[0].ready}{"\n"}{end}'
+  register: calico_node_readiness
+  changed_when: false
+
+- name: Assert Calico node agents are Ready
+  ansible.builtin.assert:
+    that:
+      - calico_node_readiness.stdout_lines | length == 2
+      - calico_node_readiness.stdout_lines | select('equalto', 'true') | list | length == 2
+    fail_msg: "Expected exactly 2 Calico node agents and both to be Ready."
+    success_msg: "Both expected Calico node agents are Ready."
+
 - name: Verify Calico version
   ansible.builtin.command:
     cmd: kubectl --kubeconfig=/etc/kubernetes/admin.conf get installation default -o jsonpath='{.status.calicoVersion}'
