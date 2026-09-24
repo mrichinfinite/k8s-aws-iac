@@ -1,5 +1,5 @@
 kubernetes_version: "1.31"
-kubernetes_package_version: ""
+kubernetes_package_version: "1.31.14-1.1"
 
 calico_version: "v3.32.2"
 calico_pod_cidr: "192.168.0.0/16"
