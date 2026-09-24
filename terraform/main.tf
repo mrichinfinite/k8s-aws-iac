@@ -190,7 +190,8 @@ resource "aws_instance" "worker" {
 }
 
 resource "local_file" "ansible_inventory" {
-  filename = "${path.module}/../ansible/inventory/aws.ini"
+  filename        = "${path.module}/../ansible/inventory/aws.ini"
+  file_permission = "0644"
 
   content = templatefile("${path.module}/templates/inventory.tftpl", {
     control_plane_public_ip  = aws_instance.control_plane.public_ip
