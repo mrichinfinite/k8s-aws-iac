@@ -11,11 +11,18 @@
     dest: /tmp/calico-custom-resources.yaml
     mode: "0644"
 
+- name: Check Tigera operator manifest for changes
+  ansible.builtin.command:
+    cmd: kubectl --kubeconfig=/etc/kubernetes/admin.conf diff -f /tmp/tigera-operator.yaml
+  register: calico_operator_diff
+  changed_when: false
+  failed_when: calico_operator_diff.rc not in [0, 1]
+
 - name: Install Tigera operator
   ansible.builtin.command:
     cmd: kubectl --kubeconfig=/etc/kubernetes/admin.conf apply -f /tmp/tigera-operator.yaml
-  register: calico_operator
-  changed_when: "'configured' in calico_operator.stdout or 'created' in calico_operator.stdout"
+  when: calico_operator_diff.rc == 1
+  changed_when: true
 
 - name: Wait for Tigera Installation CRD
   ansible.builtin.command:

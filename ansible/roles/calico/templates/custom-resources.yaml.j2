@@ -7,10 +7,17 @@ spec:
     bgp: Disabled
     ipPools:
       - blockSize: 26
-        cidr: {{ calico_pod_cidr }}
+        cidr: "{{ calico_pod_cidr }}"
         encapsulation: VXLAN
         natOutgoing: Enabled
         nodeSelector: all()
+        allowedUses:
+          - Workload
+          - Tunnel
+        assignmentMode: Automatic
+        disableBGPExport: false
+        disableNewAllocations: false
+        name: default-ipv4-ippool
 ---
 apiVersion: operator.tigera.io/v1
 kind: APIServer
