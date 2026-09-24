@@ -10,6 +10,9 @@ jobs:
   static-validation:
     runs-on: ubuntu-latest
 
+    env:
+      ANSIBLE_CONFIG: ansible/ansible.cfg
+
     steps:
       - uses: actions/checkout@v4
 
