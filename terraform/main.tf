@@ -87,6 +87,15 @@ resource "aws_vpc_security_group_ingress_rule" "api_server" {
   to_port           = 6443
 }
 
+resource "aws_vpc_security_group_ingress_rule" "api_server_admin" {
+  security_group_id = aws_security_group.nodes.id
+  description       = "Kubernetes API server from admin workstation"
+  cidr_ipv4         = var.admin_cidr
+  from_port         = 6443
+  ip_protocol       = "tcp"
+  to_port           = 6443
+}
+
 resource "aws_vpc_security_group_ingress_rule" "etcd" {
   security_group_id = aws_security_group.nodes.id
   description       = "etcd client/server traffic"
