@@ -66,6 +66,76 @@
   changed_when: false
   failed_when: calico_encapsulation.stdout != "VXLAN"
 
+- name: Get curl pod node
+  ansible.builtin.command:
+    cmd: >-
+      kubectl --kubeconfig=/etc/kubernetes/admin.conf
+      get pod curl
+      -o jsonpath='{.spec.nodeName}'
+  register: curl_node
+  changed_when: false
+
+- name: Get nginx pod count
+  ansible.builtin.command:
+    cmd: >-
+      kubectl --kubeconfig=/etc/kubernetes/admin.conf
+      get pods
+      -l app=nginx
+      -o jsonpath='{.items[*].metadata.name}'
+  register: nginx_pods
+  changed_when: false
+
+- name: Assert exactly one nginx pod exists
+  ansible.builtin.assert:
+    that:
+      - nginx_pods.stdout.split() | length == 1
+    fail_msg: "Expected exactly one nginx pod for the cross-node connectivity test."
+    success_msg: "Exactly one nginx pod exists for the cross-node connectivity test."
+
+- name: Get nginx pod node
+  ansible.builtin.command:
+    cmd: >-
+      kubectl --kubeconfig=/etc/kubernetes/admin.conf
+      get pods
+      -l app=nginx
+      -o jsonpath='{.items[0].spec.nodeName}'
+  register: nginx_node
+  changed_when: false
+
+- name: Get nginx service endpoint IP
+  ansible.builtin.command:
+    cmd: >-
+      kubectl --kubeconfig=/etc/kubernetes/admin.conf
+      get endpoints nginx
+      -o jsonpath='{.subsets[0].addresses[0].ip}'
+  register: nginx_endpoint_ip
+  changed_when: false
+
+- name: Get nginx pod IP
+  ansible.builtin.command:
+    cmd: >-
+      kubectl --kubeconfig=/etc/kubernetes/admin.conf
+      get pods
+      -l app=nginx
+      -o jsonpath='{.items[0].status.podIP}'
+  register: nginx_pod_ip
+  changed_when: false
+
+- name: Assert cross-node nginx test topology
+  ansible.builtin.assert:
+    that:
+      - curl_node.stdout | length > 0
+      - nginx_node.stdout | length > 0
+      - curl_node.stdout != nginx_node.stdout
+      - nginx_endpoint_ip.stdout == nginx_pod_ip.stdout
+    fail_msg: >-
+      Cross-node test topology is invalid. Curl and nginx must run on
+      different nodes, and the nginx Service endpoint must reference
+      the nginx pod.
+    success_msg: >-
+      Cross-node test topology verified: curl and nginx are on
+      different nodes and the Service targets the nginx pod.
+
 - name: Test pod-to-service connectivity
   ansible.builtin.command:
     cmd: kubectl --kubeconfig=/etc/kubernetes/admin.conf exec curl -- curl -fsS http://nginx.default.svc.cluster.local
