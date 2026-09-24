@@ -17,6 +17,24 @@
   register: calico_operator
   changed_when: "'configured' in calico_operator.stdout or 'created' in calico_operator.stdout"
 
+- name: Wait for Tigera Installation CRD
+  ansible.builtin.command:
+    cmd: kubectl --kubeconfig=/etc/kubernetes/admin.conf get crd installations.operator.tigera.io
+  register: tigera_installation_crd
+  changed_when: false
+  retries: 30
+  delay: 2
+  until: tigera_installation_crd.rc == 0
+
+- name: Wait for Tigera APIServer CRD
+  ansible.builtin.command:
+    cmd: kubectl --kubeconfig=/etc/kubernetes/admin.conf get crd apiservers.operator.tigera.io
+  register: tigera_apiserver_crd
+  changed_when: false
+  retries: 30
+  delay: 2
+  until: tigera_apiserver_crd.rc == 0
+
 - name: Render Calico custom resources with VXLAN enabled and BGP disabled
   ansible.builtin.template:
     src: custom-resources.yaml.j2
