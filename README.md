@@ -1,4 +1,4 @@
-# AWS Kubernetes + Calico VXLAN IaC Lab
+# Kubeadm AWS IaC Lab
 
 This repository builds an ephemeral Kubernetes networking lab in AWS using Terraform, Ansible, kubeadm, and Calico.
 
@@ -34,7 +34,7 @@ AWS VPC
         └── curl pod
 
 Kubernetes
-└── Calico
+└── Calico CNI
     ├── BGP: Disabled
     ├── VXLAN: Enabled
     └── Pod network: 192.168.0.0/16
@@ -111,6 +111,8 @@ Before deploying the lab, you need:
 - an Ubuntu 26.04 AMD64 AMI ID for the selected AWS region
 - your public IP address/CIDR for administrative access
 
+This lab creates AWS resources that may incur charges. Review current AWS pricing and Free Tier eligibility for your account before deployment.
+
 AWS credentials and SSH private keys must not be committed to the repository.
 
 Install the required Ansible collections with:
@@ -121,18 +123,72 @@ ansible-galaxy collection install -r ansible/requirements.yml
 
 ## Configure Terraform
 
-Create your local variable file:
+The repository includes `terraform/terraform.tfvars.example` as a starting point for local configuration.
+
+Create your local Terraform variable file:
 
 ```bash
 cp terraform/terraform.tfvars.example terraform/terraform.tfvars
 vim terraform/terraform.tfvars
 ```
 
-At minimum, review the AWS region, Ubuntu AMI, EC2 key pair, SSH private-key path, and administrative CIDR.
+Before deploying, review all values in `terraform.tfvars`.
 
-`terraform.tfvars` is intentionally excluded from Git.
+The following values must be appropriate for your AWS account and local environment:
 
-## Deploy
+- `aws_region` — AWS region where the lab will be deployed
+- `project_name` — name used to identify and tag the lab resources
+- `key_name` — name of an existing EC2 key pair in the selected AWS region
+- `ssh_private_key_path` — local path to the corresponding SSH private key
+- `admin_cidr` — public IP address/CIDR allowed to access SSH and the Kubernetes API
+- `nodeport_cidr` — CIDR allowed to access Kubernetes NodePort services
+- `ubuntu_ami_id` — Ubuntu 26.04 AMD64 AMI ID valid for the selected AWS region
+- `control_plane_instance_type` — EC2 instance type used for the control-plane node
+- `worker_instance_type` — EC2 instance type used for worker nodes
+- `worker_count` — number of worker nodes to create
+- `root_volume_size_gb` — root EBS volume size assigned to each node
+
+The default EC2 instance types are intended to provide reasonable resources for the Kubernetes lab and may incur AWS charges. If you are using an AWS account with Free Tier benefits, check the instance types currently eligible for your account and region and adjust `control_plane_instance_type` and `worker_instance_type` accordingly.
+
+AWS Free Tier eligibility and offerings can change over time, so this project does not assume that the default instance sizes qualify for Free Tier usage.
+
+> **Note:** AMI IDs are region-specific. Make sure `ubuntu_ami_id` identifies an Ubuntu 26.04 AMD64 image available in the same region specified by `aws_region`.
+
+`terraform.tfvars` is intentionally excluded from Git. Do not commit AWS credentials, SSH private keys, or other sensitive local configuration to the repository.
+
+## Deployment helper scripts
+
+The repository includes helper scripts for running the complete deployment and teardown workflows.
+
+After configuring `terraform/terraform.tfvars`, the entire lab can be deployed with:
+
+```bash
+./scripts/deploy.sh
+```
+
+The deployment script performs the following operations in order:
+
+1. Initializes Terraform.
+2. Generates and displays the Terraform execution plan.
+3. Prompts for approval and applies the Terraform configuration.
+4. Runs the Ansible deployment playbook.
+5. Runs the automated validation suite.
+
+The script intentionally retains Terraform's interactive approval before infrastructure is created. Review the Terraform plan before approving the apply.
+
+When finished with the lab, destroy the AWS infrastructure with:
+
+```bash
+./scripts/destroy.sh
+```
+
+Terraform will display the destroy plan and request confirmation before deleting the resources.
+
+The individual Terraform and Ansible commands documented below can still be run directly when more granular control or troubleshooting is required.
+
+## Manual Deployment
+
+Follow these steps if you want to deploy the AWS and K8s environment manually instead of using the helper script.
 
 Initialize and validate Terraform:
 
@@ -180,7 +236,9 @@ The disposable curl test pod is intentionally recreated during deployment and th
 > not indicate a deployment failure by themselves. Ansible will continue
 > polling until Calico becomes ready or the configured retry limit is reached.
 
-## Validate
+## Manual Validation
+
+Follow these steps if you want to validate the AWS and K8s environment manually instead of using the helper script.
 
 Run the automated validation suite:
 
@@ -281,7 +339,9 @@ A production AWS Kubernetes design would require additional architectural decisi
 
 Those concerns are deliberately outside the scope of this lab.
 
-## Destroy
+## Manual Destroy
+
+Follow these steps if you want to destroy the AWS and K8s environment manually instead of using the helper script.
 
 When finished, destroy the AWS infrastructure to avoid unnecessary charges:
 

@@ -1,16 +1,59 @@
-aws_region               = "us-east-1"
-project_name             = "k8s-calico-vxlan-lab"
+# -----------------------------------------------------------------------------
+# AWS
+# -----------------------------------------------------------------------------
 
-key_name                 = "YOUR_EXISTING_EC2_KEYPAIR"
-ssh_private_key_path     = "/home/YOURUSER/.ssh/YOUR_KEY.pem"
+# AWS region in which the lab will be deployed.
+aws_region   = "us-east-1"
+project_name = "kubeadm-lab"
 
-admin_cidr               = "YOUR.PUBLIC.IP.ADDRESS/32"
-nodeport_cidr            = "10.50.0.0/16"
+
+# -----------------------------------------------------------------------------
+# SSH Access
+# -----------------------------------------------------------------------------
+
+# Existing EC2 key pair in the selected AWS region.
+key_name = "YOUR_EXISTING_EC2_KEYPAIR"
+
+# Local path to the private key corresponding to the EC2 key pair.
+ssh_private_key_path = "/home/YOURUSER/.ssh/YOUR_KEY.pem"
+
+
+# -----------------------------------------------------------------------------
+# Network Access
+# -----------------------------------------------------------------------------
+
+# Public IP/CIDR permitted to access SSH and the Kubernetes API.
+# A single administrator address should normally use /32.
+admin_cidr = "YOUR.PUBLIC.IP.ADDRESS/32"
+
+# CIDR permitted to access Kubernetes NodePort services.
+nodeport_cidr = "10.50.0.0/16"
+
+
+# -----------------------------------------------------------------------------
+# Ubuntu AMI
+# -----------------------------------------------------------------------------
 
 # Supply the Ubuntu 26.04 AMD64 AMI for the selected AWS region.
-ubuntu_ami_id            = "ami-xxxxxxxxxxxxxxxxx"
+# AMI IDs are region-specific.
+ubuntu_ami_id = "ami-xxxxxxxxxxxxxxxxx"
 
+
+# -----------------------------------------------------------------------------
+# EC2 Sizing
+# -----------------------------------------------------------------------------
+
+# Default instance sizes are intended to provide reasonable resources for the
+# Kubernetes lab and may incur AWS charges.
+#
+# If using an AWS account with Free Tier benefits, review the instance types
+# currently eligible for your account and region and adjust these values
+# accordingly. Free Tier eligibility and offerings can change over time.
 control_plane_instance_type = "t3.medium"
 worker_instance_type        = "t3.small"
-worker_count                = 1
-root_volume_size_gb         = 30
+
+# Number of Kubernetes worker nodes to create.
+worker_count = 1
+
+# Root EBS volume size for each Kubernetes node.
+root_volume_size_gb = 30
